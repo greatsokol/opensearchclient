@@ -21,14 +21,21 @@ public class Main {
 
     @PostConstruct
     public void test() {
+        Document oneDoument = Document.builder()
+                .date("2024-06-19")
+                .name("Only one document")
+                .keywords(Arrays.asList("java", "spring"))
+                .build();
+
         List<Document> documents = Arrays.asList(
-                Document.builder().date("2014-11-06").name("Spring eXchange 2014 - London")
-                        .keywords(Arrays.asList("java", "spring")).build(),
-                Document.builder().date("2014-11-06").name("Spring eXchange 2014 - London")
-                        .keywords(Arrays.asList("java", "spring")).build()
+                Document.builder().date("2024-06-20").name("Bulk operation document #1")
+                        .keywords(Arrays.asList("bssscript", "dictman", "cbank", "compiler", "bss")).build(),
+                Document.builder().date("2024-06-20").name("Bulk operation document #2")
+                        .keywords(Arrays.asList("java", "spring", "psb")).build()
         );
 
         documentCustomRepository.init();
+        documentCustomRepository.save(oneDoument);
         documentCustomRepository.saveAll(documents);
     }
 }

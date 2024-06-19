@@ -5,9 +5,11 @@ import org.springframework.stereotype.Component;
 import org.study.client.OpenSeaarchRestClient;
 import org.study.domain.Document;
 
+import java.util.List;
+
 @Component
 public class DocumentCustomRepository {
-    private final String indexName = "someindex3";
+    private final String indexName = "someindex4";
     @Autowired
     OpenSeaarchRestClient<Document> osClient;
 
@@ -19,8 +21,9 @@ public class DocumentCustomRepository {
         osClient.insertDocument(indexName, document);
     }
 
-    public void saveAll(Iterable<Document> entities) {
-        entities.forEach(this::save);
+    public void saveAll(List<Document> entities) {
+        //entities.forEach(this::save);
+        osClient.insertAllDocuments(indexName, entities);
     }
 
 }

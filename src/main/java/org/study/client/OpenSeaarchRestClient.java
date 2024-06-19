@@ -1,5 +1,7 @@
 package org.study.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
@@ -32,7 +34,9 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Component
 public class OpenSeaarchRestClient<T> {
@@ -54,32 +58,6 @@ public class OpenSeaarchRestClient<T> {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-    }
-
-    public void createIndex(String indexName) {
-        String url = openSearchUrl + "/" + indexName.toLowerCase();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Object> entity = new HttpEntity<>(headers);
-        try {
-            ResponseEntity<String> out = restTemplate.getForEntity(url, String.class, entity);
-            if (out.getStatusCode().is2xxSuccessful()) {
-                logger.info("Index {indexName} already exists");
-            }
-        } catch (HttpClientErrorException.NotFound e) {
-            restTemplate.put(url, null, "");
-            logger.info("Index {indexName} created successfully");
-        }
-    }
-
-    public void insertDocument(String indexName, T document) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<T> entity = new HttpEntity<>(document, headers);
-        String url = openSearchUrl + "/" + indexName.toLowerCase() + "/_doc";
-        restTemplate.postForEntity(url, entity, String.class);
-        logger.info("Document created successfully");
     }
 
     private static FileInputStream getFileFromResource(String fileName) {
@@ -163,5 +141,51 @@ public class OpenSeaarchRestClient<T> {
         rt.setInterceptors(list);
 
         return rt;
+    }
+
+    public void createIndex(String indexName) {
+        String url = openSearchUrl + "/" + indexName.toLowerCase();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Object> entity = new HttpEntity<>(headers);
+        try {
+            ResponseEntity<String> out = restTemplate.getForEntity(url, String.class, entity);
+            if (out.getStatusCode().is2xxSuccessful()) {
+                logger.info("Index {indexName} already exists");
+            }
+        } catch (HttpClientErrorException.NotFound e) {
+            restTemplate.put(url, null, "");
+            logger.info("Index {indexName} created successfully");
+        }
+    }
+
+    public void insertDocument(String indexName, T document) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<T> entity = new HttpEntity<>(document, headers);
+        String url = openSearchUrl + "/" + indexName.toLowerCase() + "/_doc";
+        ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+        logger.info("Document created successfully " + response);
+    }
+
+    public void insertAllDocuments(String indexName, List<T> documents) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String bulk = documents.stream().
+                map(document -> {
+                    String jsondoc = "";
+                    try {
+                        jsondoc = objectMapper.writeValueAsString(document);
+                    } catch (JsonProcessingException e) {
+                        logger.error(e.getMessage());
+                    }
+                    return "{\"index\":{}}\n" + jsondoc + "\n";
+                }).collect(Collectors.joining());
+        HttpEntity<String> entity = new HttpEntity<>(bulk, headers);
+        String url = openSearchUrl + "/" + indexName.toLowerCase() + "/_bulk";
+        ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+        logger.info("Documents created successfully " + response);
     }
 }
