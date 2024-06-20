@@ -152,11 +152,11 @@ public class OpenSeaarchRestClient<T> {
         try {
             ResponseEntity<String> out = restTemplate.getForEntity(url, String.class, entity);
             if (out.getStatusCode().is2xxSuccessful()) {
-                logger.info("Index {indexName} already exists");
+                logger.info("Index {} already exists", indexName);
             }
         } catch (HttpClientErrorException.NotFound e) {
             restTemplate.put(url, null, "");
-            logger.info("Index {indexName} created successfully");
+            logger.info("Index {} created successfully", indexName);
         }
     }
 

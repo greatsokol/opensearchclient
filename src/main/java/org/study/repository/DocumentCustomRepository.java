@@ -22,7 +22,6 @@ public class DocumentCustomRepository {
     }
 
     public void saveAll(List<Document> entities) {
-        //entities.forEach(this::save);
         osClient.insertAllDocuments(indexName, entities);
     }
 
